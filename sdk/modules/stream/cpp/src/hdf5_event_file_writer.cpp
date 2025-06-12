@@ -246,71 +246,116 @@ public:
         }
     }
 
-    void open_impl(const std::filesystem::path &path) {
+//     void open_impl(const std::filesystem::path &path) {
+// #ifdef HAS_HDF5
+//         hsize_t dims[1] = {0}, maxdims[1] = {H5S_UNLIMITED};
+//         hsize_t chunk_dims[1] = {kChunkSize};
+
+//         H5::DataSpace cd_event_ds(1, dims, maxdims);
+//         H5::CompType cd_event_dt(sizeof(Metavision::EventCD));
+//         cd_event_dt.insertMember("x", HOFFSET(Metavision::EventCD, x), H5::PredType::NATIVE_USHORT);
+//         cd_event_dt.insertMember("y", HOFFSET(Metavision::EventCD, y), H5::PredType::NATIVE_USHORT);
+//         cd_event_dt.insertMember("p", HOFFSET(Metavision::EventCD, p), H5::PredType::NATIVE_SHORT);
+//         cd_event_dt.insertMember("t", HOFFSET(Metavision::EventCD, t), H5::PredType::NATIVE_LLONG);
+//         H5::DSetCreatPropList cd_event_ds_prop;
+//         cd_event_ds_prop.setChunk(1, chunk_dims);
+//         cd_event_ds_prop.setFilter(H5Z_FILTER_ECF, H5Z_FLAG_OPTIONAL, 0, nullptr);
+
+//         H5::DataSpace cd_index_ds(1, dims, maxdims);
+//         H5::CompType cd_index_dt(sizeof(Index));
+//         cd_index_dt.insertMember("id", HOFFSET(Index, id), H5::PredType::NATIVE_ULLONG);
+//         cd_index_dt.insertMember("ts", HOFFSET(Index, ts), H5::PredType::NATIVE_LLONG);
+//         H5::DSetCreatPropList cd_index_ds_prop;
+//         cd_index_ds_prop.setChunk(1, chunk_dims);
+
+//         file_ = H5::H5File(path.string(), H5F_ACC_TRUNC);
+//         file_.createGroup("/CD");
+//         H5::DataSet cd_events_dset  = file_.createDataSet("/CD/events", cd_event_dt, cd_event_ds, cd_event_ds_prop);
+//         H5::DataSet cd_indexes_dset = file_.createDataSet("/CD/indexes", cd_index_dt, cd_index_ds, cd_index_ds_prop);
+
+//         cd_events_writer_ = EventsWriter<Metavision::EventCD>(
+//             cd_events_dset, kChunkSize, encoder_.getCompressedSize(),
+//             [this](const Metavision::EventCD *begin, const Metavision::EventCD *end, std::uint8_t *ptr) {
+//                 return encoder_(reinterpret_cast<const ECF::EventCD *>(begin),
+//                                 reinterpret_cast<const ECF::EventCD *>(end), ptr);
+//             });
+//         cd_indexes_writer_ = IndexesWriter<Metavision::EventCD>(cd_indexes_dset, kChunkSize);
+
+//         H5::DataSpace ext_trigger_event_ds(1, dims, maxdims);
+//         H5::CompType ext_trigger_event_dt(sizeof(Metavision::EventExtTrigger));
+//         ext_trigger_event_dt.insertMember("p", HOFFSET(Metavision::EventExtTrigger, p), H5::PredType::NATIVE_SHORT);
+//         ext_trigger_event_dt.insertMember("t", HOFFSET(Metavision::EventExtTrigger, t), H5::PredType::NATIVE_LLONG);
+//         ext_trigger_event_dt.insertMember("id", HOFFSET(Metavision::EventExtTrigger, id), H5::PredType::NATIVE_SHORT);
+//         H5::DSetCreatPropList ext_trigger_event_ds_prop;
+//         ext_trigger_event_ds_prop.setChunk(1, chunk_dims);
+
+//         H5::CompType ext_trigger_index_dt(sizeof(Index));
+//         ext_trigger_index_dt.insertMember("id", HOFFSET(Index, id), H5::PredType::NATIVE_ULLONG);
+//         ext_trigger_index_dt.insertMember("ts", HOFFSET(Index, ts), H5::PredType::NATIVE_LLONG);
+//         H5::DataSpace ext_trigger_index_ds(1, dims, maxdims);
+//         H5::DSetCreatPropList ext_trigger_index_ds_prop;
+//         ext_trigger_index_ds_prop.setChunk(1, chunk_dims);
+
+//         file_.createGroup("/EXT_TRIGGER");
+//         H5::DataSet ext_trigger_events_dset  = file_.createDataSet("/EXT_TRIGGER/events", ext_trigger_event_dt,
+//                                                                   ext_trigger_event_ds, ext_trigger_event_ds_prop);
+//         H5::DataSet ext_trigger_indexes_dset = file_.createDataSet("/EXT_TRIGGER/indexes", ext_trigger_index_dt,
+//                                                                    ext_trigger_index_ds, ext_trigger_index_ds_prop);
+
+//         ext_trigger_events_writer_ = EventsWriter<Metavision::EventExtTrigger>(
+//             ext_trigger_events_dset, kChunkSize, kChunkSize * sizeof(Metavision::EventExtTrigger));
+//         ext_trigger_indexes_writer_ = IndexesWriter<Metavision::EventExtTrigger>(ext_trigger_indexes_dset, kChunkSize);
+
+//         add_metadata_impl("version", "1.0");
+// #else
+//         throw std::runtime_error("HDF5 is not available");
+// #endif
+//     }
+
+// Test Implementation for the EBOD project
+void open_impl(const std::filesystem::path &path) {
 #ifdef HAS_HDF5
-        hsize_t dims[1] = {0}, maxdims[1] = {H5S_UNLIMITED};
-        hsize_t chunk_dims[1] = {kChunkSize};
+    int width = 1280;
+    int height = 720;
+    hsize_t dims[1] = {0}, maxdims[1] = {H5S_UNLIMITED};
+    hsize_t chunk_dims[1] = {kChunkSize};
 
-        H5::DataSpace cd_event_ds(1, dims, maxdims);
-        H5::CompType cd_event_dt(sizeof(Metavision::EventCD));
-        cd_event_dt.insertMember("x", HOFFSET(Metavision::EventCD, x), H5::PredType::NATIVE_USHORT);
-        cd_event_dt.insertMember("y", HOFFSET(Metavision::EventCD, y), H5::PredType::NATIVE_USHORT);
-        cd_event_dt.insertMember("p", HOFFSET(Metavision::EventCD, p), H5::PredType::NATIVE_SHORT);
-        cd_event_dt.insertMember("t", HOFFSET(Metavision::EventCD, t), H5::PredType::NATIVE_LLONG);
-        H5::DSetCreatPropList cd_event_ds_prop;
-        cd_event_ds_prop.setChunk(1, chunk_dims);
-        cd_event_ds_prop.setFilter(H5Z_FILTER_ECF, H5Z_FLAG_OPTIONAL, 0, nullptr);
+    file_ = H5::H5File(path.string(), H5F_ACC_TRUNC);
+    file_.createGroup("/events");
 
-        H5::DataSpace cd_index_ds(1, dims, maxdims);
-        H5::CompType cd_index_dt(sizeof(Index));
-        cd_index_dt.insertMember("id", HOFFSET(Index, id), H5::PredType::NATIVE_ULLONG);
-        cd_index_dt.insertMember("ts", HOFFSET(Index, ts), H5::PredType::NATIVE_LLONG);
-        H5::DSetCreatPropList cd_index_ds_prop;
-        cd_index_ds_prop.setChunk(1, chunk_dims);
-
-        file_ = H5::H5File(path.string(), H5F_ACC_TRUNC);
-        file_.createGroup("/CD");
-        H5::DataSet cd_events_dset  = file_.createDataSet("/CD/events", cd_event_dt, cd_event_ds, cd_event_ds_prop);
-        H5::DataSet cd_indexes_dset = file_.createDataSet("/CD/indexes", cd_index_dt, cd_index_ds, cd_index_ds_prop);
-
-        cd_events_writer_ = EventsWriter<Metavision::EventCD>(
-            cd_events_dset, kChunkSize, encoder_.getCompressedSize(),
-            [this](const Metavision::EventCD *begin, const Metavision::EventCD *end, std::uint8_t *ptr) {
-                return encoder_(reinterpret_cast<const ECF::EventCD *>(begin),
-                                reinterpret_cast<const ECF::EventCD *>(end), ptr);
-            });
-        cd_indexes_writer_ = IndexesWriter<Metavision::EventCD>(cd_indexes_dset, kChunkSize);
-
-        H5::DataSpace ext_trigger_event_ds(1, dims, maxdims);
-        H5::CompType ext_trigger_event_dt(sizeof(Metavision::EventExtTrigger));
-        ext_trigger_event_dt.insertMember("p", HOFFSET(Metavision::EventExtTrigger, p), H5::PredType::NATIVE_SHORT);
-        ext_trigger_event_dt.insertMember("t", HOFFSET(Metavision::EventExtTrigger, t), H5::PredType::NATIVE_LLONG);
-        ext_trigger_event_dt.insertMember("id", HOFFSET(Metavision::EventExtTrigger, id), H5::PredType::NATIVE_SHORT);
-        H5::DSetCreatPropList ext_trigger_event_ds_prop;
-        ext_trigger_event_ds_prop.setChunk(1, chunk_dims);
-
-        H5::CompType ext_trigger_index_dt(sizeof(Index));
-        ext_trigger_index_dt.insertMember("id", HOFFSET(Index, id), H5::PredType::NATIVE_ULLONG);
-        ext_trigger_index_dt.insertMember("ts", HOFFSET(Index, ts), H5::PredType::NATIVE_LLONG);
-        H5::DataSpace ext_trigger_index_ds(1, dims, maxdims);
-        H5::DSetCreatPropList ext_trigger_index_ds_prop;
-        ext_trigger_index_ds_prop.setChunk(1, chunk_dims);
-
-        file_.createGroup("/EXT_TRIGGER");
-        H5::DataSet ext_trigger_events_dset  = file_.createDataSet("/EXT_TRIGGER/events", ext_trigger_event_dt,
-                                                                  ext_trigger_event_ds, ext_trigger_event_ds_prop);
-        H5::DataSet ext_trigger_indexes_dset = file_.createDataSet("/EXT_TRIGGER/indexes", ext_trigger_index_dt,
-                                                                   ext_trigger_index_ds, ext_trigger_index_ds_prop);
-
-        ext_trigger_events_writer_ = EventsWriter<Metavision::EventExtTrigger>(
-            ext_trigger_events_dset, kChunkSize, kChunkSize * sizeof(Metavision::EventExtTrigger));
-        ext_trigger_indexes_writer_ = IndexesWriter<Metavision::EventExtTrigger>(ext_trigger_indexes_dset, kChunkSize);
-
-        add_metadata_impl("version", "1.0");
-#else
-        throw std::runtime_error("HDF5 is not available");
-#endif
+    // Scalar datasets for width and height
+    {
+        hsize_t scalar_dims[1] = {1};
+        H5::DataSpace scalar_space(1, scalar_dims);
+        H5::DataSet width_dset = file_.createDataSet("/events/width", H5::PredType::NATIVE_INT, scalar_space);
+        H5::DataSet height_dset = file_.createDataSet("/events/height", H5::PredType::NATIVE_INT, scalar_space);
+        width_dset.write(&width, H5::PredType::NATIVE_INT);
+        height_dset.write(&height, H5::PredType::NATIVE_INT);
     }
+
+    // Datasets for x, y, p, t
+    H5::DSetCreatPropList ds_prop;
+    ds_prop.setChunk(1, chunk_dims);
+    ds_prop.setDeflate(4); // gzip compression, level 4 (optional)
+
+    H5::DataSpace event_space(1, dims, maxdims);
+
+    H5::DataSet x_dset = file_.createDataSet("/events/x", H5::PredType::NATIVE_USHORT, event_space, ds_prop);
+    H5::DataSet y_dset = file_.createDataSet("/events/y", H5::PredType::NATIVE_USHORT, event_space, ds_prop);
+    H5::DataSet p_dset = file_.createDataSet("/events/p", H5::PredType::NATIVE_SHORT, event_space, ds_prop);
+    H5::DataSet t_dset = file_.createDataSet("/events/t", H5::PredType::NATIVE_LLONG, event_space, ds_prop);
+
+    // Store these datasets as members if you need to append data later
+    x_dset_ = x_dset;
+    y_dset_ = y_dset;
+    p_dset_ = p_dset;
+    t_dset_ = t_dset;
+
+    add_metadata_impl("version", "1.0");
+#else
+    throw std::runtime_error("HDF5 is not available");
+#endif
+}
 
     void close_impl() {
 #ifdef HAS_HDF5
@@ -363,19 +408,66 @@ public:
 #endif
     }
 
+//     bool add_events_impl(const EventCD *begin, const EventCD *end) {
+// #ifdef HAS_HDF5
+//         if (!cd_indexes_writer_(begin, end)) {
+//             return false;
+//         }
+//         if (!cd_events_writer_(begin, end)) {
+//             return false;
+//         }
+//         return true;
+// #else
+//         return false;
+// #endif
+//     }
+
     bool add_events_impl(const EventCD *begin, const EventCD *end) {
 #ifdef HAS_HDF5
-        if (!cd_indexes_writer_(begin, end)) {
-            return false;
-        }
-        if (!cd_events_writer_(begin, end)) {
-            return false;
-        }
-        return true;
-#else
-        return false;
-#endif
+    size_t num_events = std::distance(begin, end);
+    if (num_events == 0) return true;
+
+    // Prepare buffers for each field
+    std::vector<uint16_t> x_buf(num_events);
+    std::vector<uint16_t> y_buf(num_events);
+    std::vector<int16_t>  p_buf(num_events);
+    std::vector<int64_t>  t_buf(num_events);
+
+    for (size_t i = 0; i < num_events; ++i) {
+        x_buf[i] = begin[i].x;
+        y_buf[i] = begin[i].y;
+        p_buf[i] = begin[i].p;
+        t_buf[i] = begin[i].t;
     }
+
+    hsize_t old_size = current_size_;
+    hsize_t new_size = old_size + num_events;
+    hsize_t dims[1] = {new_size};
+    hsize_t offset[1] = {old_size};
+    hsize_t count[1] = {num_events};
+
+    // Extend datasets
+    x_dset_.extend(dims);
+    y_dset_.extend(dims);
+    p_dset_.extend(dims);
+    t_dset_.extend(dims);
+
+    // Write to datasets
+    H5::DataSpace fspace = x_dset_.getSpace();
+    fspace.selectHyperslab(H5S_SELECT_SET, count, offset);
+    H5::DataSpace mspace(1, count);
+
+    x_dset_.write(x_buf.data(), H5::PredType::NATIVE_USHORT, mspace, fspace);
+    y_dset_.write(y_buf.data(), H5::PredType::NATIVE_USHORT, mspace, fspace);
+    p_dset_.write(p_buf.data(), H5::PredType::NATIVE_SHORT,  mspace, fspace);
+    t_dset_.write(t_buf.data(), H5::PredType::NATIVE_LLONG,  mspace, fspace);
+
+    current_size_ = new_size;
+    return true;
+#else
+    return false;
+#endif
+}
 
     bool add_events_impl(const EventExtTrigger *begin, const EventExtTrigger *end) {
 #ifdef HAS_HDF5
@@ -399,6 +491,8 @@ public:
     IndexesWriter<Metavision::EventCD> cd_indexes_writer_;
     EventsWriter<Metavision::EventExtTrigger> ext_trigger_events_writer_;
     IndexesWriter<Metavision::EventExtTrigger> ext_trigger_indexes_writer_;
+    H5::DataSet x_dset_, y_dset_, p_dset_, t_dset_;
+    hsize_t current_size_ = 0;
 #endif
     HDF5EventFileWriter &writer_;
 };
